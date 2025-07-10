@@ -2,6 +2,7 @@
 # Sway Snip by Zuma206
 # Licensed under the GPLv3
 import subprocess
+import itertools
 import shutil
 import i3ipc
 
@@ -75,6 +76,20 @@ def get_focused_output():
   outputs = i3ipc.Connection().get_outputs()
   return next(filter(lambda output: output.focused, outputs))
 
+# Wrapper for the swaynag command
+@dependancies("swaynag")
+def sway_nag(message, actions):
+  button_opts = [["-z", text, f"echo {index}"] for index, text in enumerate(actions)]
+  button_opts = list(itertools.chain.from_iterable(button_opts))
+  proc = subprocess.run(["swaynag", "-m", message, *button_opts], capture_output=True)
+  return int(proc.stdout.decode())
+
+# Copies to the wayland clipboard
+@dependancies("wl-copy")
+def wlcopy(buf, mime_type=None):
+  mime_type_opt = ["-f", mime_type] if mime_type is not None else []
+  subprocess.run(["wl-copy", *mime_type_opt], input=buf, check=True)
+
 # Takes a screenshot, and displays it in fullscreen
 def main():
   output = get_focused_output()
@@ -82,7 +97,11 @@ def main():
   with ProcessContext(imv(image, fullscreen=True)):
     geometry = slurp().scale(output.scale)
   cropped = crop(image, geometry)
-  imv(cropped, wait=True)
+  with ProcessContext(imv(cropped)):
+    choice = sway_nag("Screenshot Taken", ["Copy"])
+  match choice:
+    case 0:
+      wlcopy(cropped)
   
 if __name__ == "__main__":
   main()
