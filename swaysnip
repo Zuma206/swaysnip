@@ -24,8 +24,14 @@ def grim():
 class IMV:
   def __init__(self, image, fullscreen=False):
     fullscreen_opt = ["-f"] if fullscreen else []
-    self.__process = subprocess.run(["imv", *fullscreen_opt, "-"], input=image, check=True)
+    self.__process = subprocess.Popen(["imv", *fullscreen_opt, "-"], stdin=subprocess.PIPE)
+    self.__process.stdin.write(image)
+    self.__process.stdin.close()
 
+  def close(self):
+    self.__process.terminate()
+
+# Wrapper for the slurp utility
 @dependancies("slurp")
 class Slurp:
   def __init__(self):
@@ -39,8 +45,9 @@ class Slurp:
 def main():
   image = grim()
   print("Took screen capture, displaying...")
-  IMV(image, fullscreen=True)
+  imv = IMV(image, fullscreen=True)
   geometry = Slurp()
+  imv.close()
   print(geometry)
 
 if __name__ == "__main__":
