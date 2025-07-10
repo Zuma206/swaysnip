@@ -6,20 +6,25 @@ import shutil
 
 # Check that the required dependancies are installed for a given function
 def dependancies(*dependancies):
-  def decorator(func):
+  def decorator(func_or_class):
     for dependancy in dependancies:
       if shutil.which(dependancy) is None:
         print(f"Missing dependancy: {dependancy}")
-    return func
+    return func_or_class
   return decorator
 
 @dependancies("grim")
 def grim():
-  proc = subprocess.run(["grim", "-"])
+  proc = subprocess.run(["grim", "-"], check=True, capture_output=True)
   return proc.stdout
 
+@dependancies("imv")
+class IMV:
+  def __init__(self, image):
+    self.__process = subprocess.run(["imv", "-"], input=image, check=True)
+
 def main():
-  print(grim())
-  
+  IMV(grim())
+
 if __name__ == "__main__":
   main()
