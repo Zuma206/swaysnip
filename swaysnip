@@ -13,18 +13,22 @@ def dependancies(*dependancies):
     return func_or_class
   return decorator
 
+# Wrapper for the grim utility
 @dependancies("grim")
 def grim():
   proc = subprocess.run(["grim", "-"], check=True, capture_output=True)
   return proc.stdout
 
+# Wrapper for the imv utility
 @dependancies("imv")
 class IMV:
-  def __init__(self, image):
-    self.__process = subprocess.run(["imv", "-"], input=image, check=True)
+  def __init__(self, image, fullscreen=False):
+    fullscreen_opt = ["-f"] if fullscreen else []
+    self.__process = subprocess.run(["imv", *fullscreen_opt, "-"], input=image, check=True)
 
+# Takes a screenshot, and displays it in fullscreen
 def main():
-  IMV(grim())
+  IMV(grim(), fullscreen=True)
 
 if __name__ == "__main__":
   main()
