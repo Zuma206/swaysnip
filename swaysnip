@@ -21,17 +21,24 @@ def grim():
 
 # Wrapper for the imv utility
 @dependancies("imv")
-class IMV:
-  def __init__(self, image, fullscreen=False, wait=False):
-    fullscreen_opt = ["-f"] if fullscreen else []
-    self.__process = subprocess.Popen(["imv", *fullscreen_opt, "-"], stdin=subprocess.PIPE)
-    self.__process.stdin.write(image)
-    self.__process.stdin.close()
-    if wait:
-      self.__process.wait()
+def imv(image, fullscreen=False, wait=False):
+  fullscreen_opt = ["-f"] if fullscreen else []
+  proc = subprocess.Popen(["imv", *fullscreen_opt, "-"], stdin=subprocess.PIPE)
+  proc.stdin.write(image)
+  proc.stdin.close()
+  if wait:
+    proc.wait()
+  return proc
 
-  def close(self):
-    self.__process.terminate()
+class ProcessContext:
+  def __init__(self, proc):
+    self.__proc = proc
+  
+  def __enter__(self):
+    return self.__proc
+
+  def __exit__(self, *_):
+    return self.__proc.terminate()
 
 # Wrapper for the slurp utility
 @dependancies("slurp")
@@ -54,12 +61,11 @@ def crop(image, geometry):
 def main():
   image = grim()
   print("Took screen capture, displaying...")
-  imv = IMV(image, fullscreen=True)
-  geometry = Slurp()
-  imv.close()
+  with ProcessContext(imv(image, fullscreen=True)):
+    geometry = Slurp()
   print(geometry)
   cropped_image = crop(image, geometry)
-  IMV(cropped_image, wait=True)
+  imv(cropped_image, wait=True)
 
 if __name__ == "__main__":
   main()
