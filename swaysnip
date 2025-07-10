@@ -80,10 +80,11 @@ def get_focused_output():
 
 # Wrapper for the swaynag command
 @dependancies("swaynag")
-def sway_nag(message, actions):
+def sway_nag(message, actions, nag_type=None):
   button_opts = [["-z", text, f"echo {index}"] for index, text in enumerate(actions)]
   button_opts = list(itertools.chain.from_iterable(button_opts))
-  code = subprocess.run(["swaynag", "-m", message, *button_opts], capture_output=True).stdout.decode()
+  nag_type_opt = ["--type", nag_type] if nag_type is not None else []
+  code = subprocess.run(["swaynag", *nag_type_opt, "-m", message, *button_opts], capture_output=True).stdout.decode()
   if code == "":
     return -1
   return int(code)
