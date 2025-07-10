@@ -30,6 +30,7 @@ def imv(image, fullscreen=False, wait=False):
     proc.wait()
   return proc
 
+# Maps a process to a context, terminating it on context exit
 class ProcessContext:
   def __init__(self, proc):
     self.__proc = proc
@@ -40,15 +41,19 @@ class ProcessContext:
   def __exit__(self, *_):
     return self.__proc.terminate()
 
+# Represents crop geometry
+class Geometry:
+  def __init__(self, w, h, x, y):
+    self.w = w
+    self.h = h
+    self.x = x
+    self.y = y
+
 # Wrapper for the slurp utility
 @dependancies("slurp")
-class Slurp:
-  def __init__(self):
-    proc = subprocess.run(["slurp", "-f", "%w %h %x %y"], check=True, capture_output=True)
-    self.w, self.h, self.x, self.y = map(float, proc.stdout.decode().split())
-
-  def __repr__(self):
-    return f"location({self.w}, {self.h}) size({self.x}, {self.y})"
+def slurp():
+  proc = subprocess.run(["slurp", "-f", "%w %h %x %y"], check=True, capture_output=True)
+  return Geometry(*map(float, proc.stdout.decode().split()))
 
 # Wrapper for the magick -crop option
 @dependancies("magick")
@@ -62,7 +67,7 @@ def main():
   image = grim()
   print("Took screen capture, displaying...")
   with ProcessContext(imv(image, fullscreen=True)):
-    geometry = Slurp()
+    geometry = slurp()
   print(geometry)
   cropped_image = crop(image, geometry)
   imv(cropped_image, wait=True)
