@@ -3,8 +3,10 @@
 # Licensed under the GPLv3
 import subprocess
 import itertools
+import datetime
 import shutil
 import i3ipc
+import os
 
 # Check that the required dependancies are installed for a given function
 def dependancies(*dependancies):
@@ -92,18 +94,30 @@ def wlcopy(buf, mime_type=None):
   mime_type_opt = ["-f", mime_type] if mime_type is not None else []
   subprocess.run(["wl-copy", *mime_type_opt], input=buf, check=True)
 
+SCREENSHOT_DIR = os.path.expanduser("~/Pictures/screenshots")
+
+# Save a screenshot to a filename based on the time it was taken
+def save_screenshot(time, image):
+  os.makedirs(SCREENSHOT_DIR, exist_ok=True)
+  filepath = os.path.join(SCREENSHOT_DIR, time.strftime("%Y-%m-%d_%H-%M-%S-%f.png"))
+  with open(filepath, "wb") as file:
+    file.write(image)
+
 # Takes a screenshot, and displays it in fullscreen
 def main():
   output = get_focused_output()
   image = grim(output)
+  time = datetime.datetime.now()
   with ProcessContext(imv(image, fullscreen=True)):
     geometry = slurp().scale(output.scale)
   cropped = crop(image, geometry)
   with ProcessContext(imv(cropped)):
-    choice = sway_nag("Screenshot Taken", ["Copy"])
+    choice = sway_nag("Screenshot Taken", ["Copy", "Save"])
   match choice:
     case 0:
       wlcopy(cropped)
+    case 1:
+      save_screenshot(time, cropped)
   
 if __name__ == "__main__":
   main()
