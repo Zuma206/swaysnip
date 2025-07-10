@@ -26,9 +26,22 @@ class IMV:
     fullscreen_opt = ["-f"] if fullscreen else []
     self.__process = subprocess.run(["imv", *fullscreen_opt, "-"], input=image, check=True)
 
+@dependancies("slurp")
+class Slurp:
+  def __init__(self):
+    proc = subprocess.run(["slurp", "-f", "%w %h %x %y"], check=True, capture_output=True)
+    self.w, self.h, self.x, self.y = map(float, proc.stdout.decode().split())
+
+  def __repr__(self):
+    return f"location({self.w}, {self.h}) size({self.x}, {self.y})"
+
 # Takes a screenshot, and displays it in fullscreen
 def main():
-  IMV(grim(), fullscreen=True)
+  image = grim()
+  print("Took screen capture, displaying...")
+  IMV(image, fullscreen=True)
+  geometry = Slurp()
+  print(geometry)
 
 if __name__ == "__main__":
   main()
