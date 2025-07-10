@@ -81,8 +81,10 @@ def get_focused_output():
 def sway_nag(message, actions):
   button_opts = [["-z", text, f"echo {index}"] for index, text in enumerate(actions)]
   button_opts = list(itertools.chain.from_iterable(button_opts))
-  proc = subprocess.run(["swaynag", "-m", message, *button_opts], capture_output=True)
-  return int(proc.stdout.decode())
+  code = subprocess.run(["swaynag", "-m", message, *button_opts], capture_output=True).stdout.decode()
+  if code == "":
+    return -1
+  return int(code)
 
 # Copies to the wayland clipboard
 @dependancies("wl-copy")
