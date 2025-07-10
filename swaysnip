@@ -16,8 +16,9 @@ def dependancies(*dependancies):
 
 # Wrapper for the grim utility
 @dependancies("grim")
-def grim():
-  proc = subprocess.run(["grim", "-"], check=True, capture_output=True)
+def grim(output=None):
+  output_opt = ["-o", output.name] if output != None else []
+  proc = subprocess.run(["grim", *output_opt, "-"], check=True, capture_output=True)
   return proc.stdout
 
 # Wrapper for the imv utility
@@ -50,6 +51,12 @@ class Geometry:
     self.x = x
     self.y = y
 
+  def scale(self, scale):
+    return Geometry(
+      self.w * scale, self.h * scale,
+      self.x * scale, self.y * scale
+    )
+
 # Wrapper for the slurp utility
 @dependancies("slurp")
 def slurp():
@@ -70,15 +77,12 @@ def get_focused_output():
 
 # Takes a screenshot, and displays it in fullscreen
 def main():
-  image = grim()
-  print("Took screen capture, displaying...")
+  output = get_focused_output()
+  image = grim(output)
   with ProcessContext(imv(image, fullscreen=True)):
-    geometry = slurp()
-  print(geometry)
-  cropped_image = crop(image, geometry)
-  focused_output = get_focused_output()
-  print(focused_output.name, focused_output.scale)
-  imv(cropped_image, wait=True)
-
+    geometry = slurp().scale(output.scale)
+  cropped = crop(image, geometry)
+  imv(cropped, wait=True)
+  
 if __name__ == "__main__":
   main()
