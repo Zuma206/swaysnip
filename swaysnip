@@ -6,6 +6,7 @@ import itertools
 import datetime
 import shutil
 import i3ipc
+import sys
 import os
 
 # Check that the required dependancies are installed for a given function
@@ -113,7 +114,8 @@ def main():
     geometry = slurp().scale(output.scale)
   cropped = crop(image, geometry)
   with ProcessContext(imv(cropped)):
-    choice = sway_nag("Screenshot Taken", ["Copy", "Save"])
+    nag_type = sys.argv[1] if len(sys.argv) > 1 else None
+    choice = sway_nag("Screenshot Taken", ["Copy", "Save"], nag_type=nag_type)
   match choice:
     case 0:
       wlcopy(cropped)
