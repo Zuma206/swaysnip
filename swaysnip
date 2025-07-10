@@ -3,6 +3,7 @@
 # Licensed under the GPLv3
 import subprocess
 import shutil
+import i3ipc
 
 # Check that the required dependancies are installed for a given function
 def dependancies(*dependancies):
@@ -62,6 +63,11 @@ def crop(image, geometry):
   proc = subprocess.run(["magick", "-", "-crop", geometry_opt, "-"], input=image, check=True, capture_output=True)
   return proc.stdout
 
+# Get's the currently focused output using sway's IPC system
+def get_focused_output():
+  outputs = i3ipc.Connection().get_outputs()
+  return next(filter(lambda output: output.focused, outputs))
+
 # Takes a screenshot, and displays it in fullscreen
 def main():
   image = grim()
@@ -70,6 +76,8 @@ def main():
     geometry = slurp()
   print(geometry)
   cropped_image = crop(image, geometry)
+  focused_output = get_focused_output()
+  print(focused_output.name, focused_output.scale)
   imv(cropped_image, wait=True)
 
 if __name__ == "__main__":
