@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # Sway Snip by Zuma206
 # Licensed under the GPLv3
+import subprocess
 import shutil
 
 # Check that the required dependancies are installed for a given function
@@ -12,8 +13,13 @@ def dependancies(*dependancies):
     return func
   return decorator
 
-def main():
-  pass
+@dependancies("grim")
+def grim():
+  proc = subprocess.run(["grim", "-"])
+  return proc.stdout
 
+def main():
+  print(grim())
+  
 if __name__ == "__main__":
   main()
