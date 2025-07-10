@@ -22,11 +22,13 @@ def grim():
 # Wrapper for the imv utility
 @dependancies("imv")
 class IMV:
-  def __init__(self, image, fullscreen=False):
+  def __init__(self, image, fullscreen=False, wait=False):
     fullscreen_opt = ["-f"] if fullscreen else []
     self.__process = subprocess.Popen(["imv", *fullscreen_opt, "-"], stdin=subprocess.PIPE)
     self.__process.stdin.write(image)
     self.__process.stdin.close()
+    if wait:
+      self.__process.wait()
 
   def close(self):
     self.__process.terminate()
@@ -41,6 +43,13 @@ class Slurp:
   def __repr__(self):
     return f"location({self.w}, {self.h}) size({self.x}, {self.y})"
 
+# Wrapper for the magick -crop option
+@dependancies("magick")
+def crop(image, geometry):
+  geometry_opt = f"{geometry.w}x{geometry.h}+{geometry.x}+{geometry.y}"
+  proc = subprocess.run(["magick", "-", "-crop", geometry_opt, "-"], input=image, check=True, capture_output=True)
+  return proc.stdout
+
 # Takes a screenshot, and displays it in fullscreen
 def main():
   image = grim()
@@ -49,6 +58,8 @@ def main():
   geometry = Slurp()
   imv.close()
   print(geometry)
+  cropped_image = crop(image, geometry)
+  IMV(cropped_image, wait=True)
 
 if __name__ == "__main__":
   main()
